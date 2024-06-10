@@ -30,9 +30,9 @@ def resize_video(video_path, output_path, width, height):
     
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video", help="Path to the video file", default="vehicle-counting.mp4")
-    parser.add_argument("--output", help="Path to save the resized video", default="output.mp4")
-    parser.add_argument("--width", help="Width of the resized video", type=int, default=640)
+    parser.add_argument("--video", help="Path to the video file", default="./assets/test5.mp4")
+    parser.add_argument("--output", help="Path to save the resized video", default="./assets/test5r.mp4")
+    parser.add_argument("--width", help="Width of the resized video", type=int, default=900)
     parser.add_argument("--height", help="Height of the resized video", type=int, default=480)
     args = parser.parse_args()
 

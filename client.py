@@ -4,6 +4,8 @@ import socket
 import sys
 import argparse
 from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 parser = argparse.ArgumentParser()
@@ -12,9 +14,22 @@ args = parser.parse_args()
 
 path_str = 'assets\\' + args.video + '.mp4'
 
+cv2.namedWindow("Initial Window")
+screen = np.zeros((500,700, 3), dtype="uint8")
 if not Path(path_str).exists():
-    print("Video file not found. Exiting.")
+    cv2.putText(screen, f"Video file {path_str} not found.", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(screen, "Press any key to exit.", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.imshow("Initial Window", screen)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     sys.exit()
+else:
+    cv2.putText(screen, f"Video file {path_str} found!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(screen, "Press any key to continue.", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.imshow("Initial Window", screen)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
 
 # Load video file
 cap = cv2.VideoCapture(path_str)
@@ -182,9 +197,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
     # Print the results
     for result in results:
-        print(f"Total cyclists entering ROI {result['color']}: {result['person']}")
-        print(f"Total pedestrians entering ROI {result['color']}: {result['bicycle']}")
-        print(f"Total cars entering ROI {result['color']}: {result['car']}")
-        print(f"Total trucks entering ROI {result['color']}: {result['truck']}")
-        print(f"Total buses entering ROI {result['color']}: {result['bus']}")
-        print(f"Total motorcycles entering ROI {result['color']}: {result['motorcycle']}")
+        print(f"Total pedestrians entering ROI {result['color']}: {np.sum(result['person'])}")
+        print(f"Total cyclists entering ROI {result['color']}: {np.sum(result['bicycle'])}")
+        print(f"Total cars entering ROI {result['color']}: {np.sum(result['car'])}")
+        print(f"Total trucks entering ROI {result['color']}: {np.sum(result['truck'])}")
+        print(f"Total buses entering ROI {result['color']}: {np.sum(result['bus'])}")
+        print(f"Total motorcycles entering ROI {result['color']}: {np.sum(result['motorcycle'])}")
+        
+    # draw graph of the results and print the graph
+    classes_list = ['person', 'bicycle', 'motorcycle', 'car', 'bus', 'truck']
+    x = [1,2,3,4,5,6]
+    for class_name in classes_list:
+        plt.cla()
+        plt.clf()
+        for result in results:
+            plt.plot(x, result[class_name], color=result['color'])
+        plt.title(f'{class_name} Count')
+        plt.savefig('assets\\graph.png')
+        graph = cv2.imread('assets\\graph.png')
+        cv2.imshow('Graph', graph)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()

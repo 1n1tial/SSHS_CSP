@@ -17,12 +17,24 @@ from ultralytics import YOLO
 model = YOLO(MODEL)
 model.fuse()
 
+# a function that takes a list of numbers and a max value and counts how many numbers are in equally devided intervals of the max value
+# used for printing the results of the counter
+def count_intervals(numbers, max_value, num_intervals):
+    intervals = np.linspace(0, max_value, num_intervals + 1)
+    counts = np.zeros(num_intervals)
+    for number in numbers:
+        for i in range(num_intervals):
+            if intervals[i] < number <= intervals[i + 1]:
+                counts[i] += 1
+    return counts.tolist()
+    
 class Counter:
     def __init__(self, start:tuple, end:tuple, video_file:str):
         self.start = start
         self.end = end
         self.video_file = video_file
         self.video_file = '/home/initial/CSP/assets/' + self.video_file + '.mp4'
+        
         self.selected_classes = {'person':0, 'bicycle':1, 'motorcycle':3, 'car':2, 'bus':5, 'truck':7}
         self.byte_tracker = {'person': sv.ByteTrack(track_activation_threshold=0.25, lost_track_buffer=30, minimum_matching_threshold=0.8, frame_rate=30),
                              'bicycle': sv.ByteTrack(track_activation_threshold=0.25, lost_track_buffer=30, minimum_matching_threshold=0.8, frame_rate=30),
@@ -36,8 +48,31 @@ class Counter:
                            'car': sv.LineZone(start=sv.Point(*self.start), end=sv.Point(*self.end)),
                            'bus': sv.LineZone(start=sv.Point(*self.start), end=sv.Point(*self.end)),
                            'truck': sv.LineZone(start=sv.Point(*self.start), end=sv.Point(*self.end))}
+        self.counter = {
+            'person': 0,
+            'bicycle': 0,
+            'motorcycle': 0,
+            'car': 0,
+            'bus': 0,
+            'truck': 0
+        }
+        self.frame_counter = {
+            'person': [],
+            'bicycle': [],
+            'motorcycle': [],
+            'car': [],
+            'bus': [],
+            'truck': []
+        }
         
     def process(self):
+        try:
+            cap = cv2.VideoCapture(self.video_file)
+            length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        except Exception as e:
+            print(e)
+            return {'error': str(e)}
+        
         def callback(frame: np.ndarray, index:int) -> np.ndarray:
             results = model(frame, verbose=False)[0]
             for key in self.selected_classes:
@@ -45,6 +80,9 @@ class Counter:
                 detections = detections[detections.class_id == self.selected_classes[key]]
                 detections = self.byte_tracker[key].update_with_detections(detections)
                 self.line_zones[key].trigger(detections)
+                if self.line_zones[key].in_count + self.line_zones[key].out_count > self.counter[key]:
+                    self.counter[key] = self.line_zones[key].in_count + self.line_zones[key].out_count
+                    self.frame_counter[key].append(index)
             return None
         
         try:
@@ -56,7 +94,7 @@ class Counter:
         except Exception as e:
             print(e)
             return {'error': str(e)}
-        return {key: self.line_zones[key].in_count + self.line_zones[key].out_count for key in self.line_zones}
+        return {key: count_intervals(self.frame_counter[key], length, 6) for key in self.frame_counter}
 
 
 def calculate(roi_coordinates):
@@ -91,6 +129,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             results = json.dumps(roi_counters)
             conn.sendall(results.encode())
             print("Results sent to client")
+            print("Waiting for ROI coordinates...")
 
 
 

@@ -202,7 +202,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s: # create a socket
 
     # Print the results
     for result in results: # print the results for each roi
-        print(f"Total pedestrians entering ROI {result['color']}: {np.sum(result['person'])}")
+        print(f"Total pedestrians entering ROI {result['color']}: {max(np.sum(result['person']) - np.sum(result['bicycle']), 0)}") # pedestrian = person - bicycle
         print(f"Total cyclists entering ROI {result['color']}: {np.sum(result['bicycle'])}")
         print(f"Total cars entering ROI {result['color']}: {np.sum(result['car'])}")
         print(f"Total trucks entering ROI {result['color']}: {np.sum(result['truck'])}")
@@ -217,6 +217,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s: # create a socket
         plt.cla()
         plt.clf() # clear the previous graph
         for result in results:
+            if class_name == 'person':
+                plt.plot(x, [max(result['person'][i] - result['bicycle'][i], 0) for i in range(6)], color=result['color']) # pedestrian = person - bicycle
             plt.plot(x, result[class_name], color=result['color']) # plot the results of count in each interval as a line graph
         plt.title(f'{class_name} Count')
         plt.savefig('assets\\graph.png')

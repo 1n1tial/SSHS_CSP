@@ -6,3 +6,33 @@
 
 ## Client Side
 `client.py`를 실행한다
+
+## Transaction
+#### CLIENT $\bm\rarr$ SERVER
+``` python
+{
+    "start":int[2]
+    "end":int[2] 
+    "color":str
+    "video":str
+}[]
+```
+
+#### SERVER $\bm\rarr$ CLIENT
+```python
+{
+    'person': float[]
+    'bicycle': float[]
+    'motorcycle': float[]
+    'car': float[]
+    'bus': float[]
+    'truck': float[]
+    'color': str    
+}[]
+```
+in case of error
+```python
+{
+    'error': str
+}
+```
